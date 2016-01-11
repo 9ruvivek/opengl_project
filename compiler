@@ -1,0 +1,7 @@
+all: executable
+
+executable: testing.cpp
+	g++ -o executable testing.cpp -lGL -lGLU -lGLEW -lglut 
+clean:
+	rm executable
+
