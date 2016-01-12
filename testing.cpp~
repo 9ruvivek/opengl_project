@@ -125,13 +125,7 @@ float triangle_rot_dir = 1;
 float rectangle_rot_dir = 1;
 bool triangle_rot_status = true;
 bool rectangle_rot_status = true;
-
 VAO *triangle, *rectangle;
-
-float camera_rotation_angle = 90;
-float rectangle_rotation = 0;
-float triangle_rotation = 0;
-
 /* Executed when a regular key is pressed */
 void keyboardDown(unsigned char key, int x, int y)
 {
@@ -196,8 +190,6 @@ void mouseMotion(int x, int y)
 }
 /* Executed when window is resized to 'width' and 'height' */
 /* Modify the bounds of the screen here in glm::ortho or Field of View in glm::Perspective */
-
-// To be understood !!
 void reshapeWindow(int width, int height)
 {
 	GLfloat fov = 90.0f;
@@ -226,7 +218,7 @@ void createTriangle()
     0,0,1, // color 2
   };
   // create3DObject creates and returns a handle to a VAO that can be used later
-  triangle = create3DObject(GL_TRIANGLES, 3, vertex_buffer_data, color_buffer_data, GL_FILL);
+  triangle = create3DObject(GL_TRIANGLES, 3, vertex_buffer_data, color_buffer_data, GL_LINE);
 }
 void createRectangle()
 {
@@ -253,83 +245,6 @@ void createRectangle()
   // create3DObject creates and returns a handle to a VAO that can be used later
   rectangle = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data, color_buffer_data, GL_FILL);
 }
-
-/* Render the scene with openGL */
-/* Edit this function according to your assignment */
-void draw ()
-{
-  // clear the color and depth in the frame buffer
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  // use the loaded shader program
-  glUseProgram (programID);
-
-  // Eye - Location of camera.
-  glm::vec3 eye( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
-  // Target - Where is the camera looking at.
-  glm::vec3 target(0, 0, 0);
-  // Up - Up vector defines tilt of camera.
-  glm::vec3 up(0, 1, 0);
-
-  // Compute Camera matrix (view)
-  // Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
-  Matrices.view = glm::lookAt(glm::vec3(0,0,3), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
-
-  // Compute ViewProject matrix as view/camera might not be changed for this frame (basic scenario)
-  glm::mat4 VP = Matrices.projection * Matrices.view;
-
-  // Send our transformation to the currently bound shader, in the "MVP" uniform
-  // For each model you render, since the MVP will be different (at least the M part)
-  glm::mat4 MVP;	// MVP = Projection * View * Model
-
-  // Load identity to model matrix
-  Matrices.model = glm::mat4(1.0f);
-
-  /* Render your scene */
-
-  glm::mat4 translateTriangle = glm::translate (glm::vec3(-2.0f, 0.0f, 0.0f)); // glTranslatef
-  glm::mat4 rotateTriangle = glm::rotate((float)(triangle_rotation*M_PI/180.0f), glm::vec3(0,0,1));  // rotate about vector (1,0,0)
-  glm::mat4 triangleTransform = translateTriangle * rotateTriangle;
-  Matrices.model *= triangleTransform; 
-  MVP = VP * Matrices.model; // MVP = p * V * M
-  glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-
-  // draw3DObject draws the VAO given to it using current MVP matrix
-  draw3DObject(triangle);
-  Matrices.model = glm::mat4(1.0f);
-
-  glm::mat4 translateRectangle = glm::translate (glm::vec3(2.0f, 0.0f, 0.0f));        // glTranslatef
-  glm::mat4 rotateRectangle = glm::rotate((float)(rectangle_rotation*M_PI/180.0f), glm::vec3(0,0,1)); // rotate about vector (-1,1,1)
-  Matrices.model *= (translateRectangle * rotateRectangle);
-  MVP = VP * Matrices.model;
-  glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-
-  // draw3DObject draws the VAO given to it using current MVP matrix
-  draw3DObject(rectangle);
-
-  // Swap the frame buffers
-  glutSwapBuffers ();
-
-  // Increment angles
-  float increments = 1;
-
-  //camera_rotation_angle++; // Simulating camera rotation
-  // This basically does rotation if needed in the direction required
-  triangle_rotation = triangle_rotation + increments*triangle_rot_dir*triangle_rot_status;
-  rectangle_rotation = rectangle_rotation + increments*rectangle_rot_dir*rectangle_rot_status;
-}
-
-/* Executed when the program is idle (no I/O activity) */
-void idle () {
-    // OpenGL should never stop drawing
-    // can draw the same scene or a modified scene
-    draw (); // drawing same scene
-}
-
-
-/* Initialise glut window, I/O callbacks and the renderer to use */
-/* Nothing to Edit here */
-
 void initGLUT(int& argc, char** argv, int width, int height)
 {
     glutInit(&argc, argv);
@@ -337,7 +252,7 @@ void initGLUT(int& argc, char** argv, int width, int height)
     glutInitContextVersion(3, 3);
     glutInitContextFlags(GLUT_CORE_PROFILE);
     glutInitWindowSize(width, height);
-    glutCreateWindow("Learning OGL3.3");
+    glutCreateWindow("Sample OpenGL3.3 Application");
     glewExperimental = GL_TRUE;
     GLenum err = glewInit();
     if (err != GLEW_OK) {
@@ -345,9 +260,9 @@ void initGLUT(int& argc, char** argv, int width, int height)
         exit (1);
     }
     // register glut callbacks
-    glutKeyboardFunc(keyboardDown);
-    glutKeyboardUpFunc(keyboardUp);
-    
+    /*glutKeyboardFunc (keyboardDown);
+    glutKeyboardUpFunc (keyboardUp);
+
     glutSpecialFunc (keyboardSpecialDown);
     glutSpecialUpFunc (keyboardSpecialUp);
 
@@ -362,14 +277,16 @@ void initGLUT(int& argc, char** argv, int width, int height)
     glutIgnoreKeyRepeat (true); // Ignore keys held down*/
 }
 
-void initGL(int width, int height)
+/*void initGL (int width, int height)
 {
 	// Create the models
+	createTriangle (); // Generate the VAO, VBOs, vertices data & copy into the array buffer
 
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
 	// Get a handle for our "MVP" uniform
 	Matrices.MatrixID = glGetUniformLocation(programID, "MVP");
+
 
 	reshapeWindow (width, height);
 
@@ -380,20 +297,19 @@ void initGL(int width, int height)
 	glEnable (GL_DEPTH_TEST);
 	glDepthFunc (GL_LEQUAL);
 
-	createTriangle (); // Generate the VAO, VBOs, vertices data & copy into the array buffer
 	createRectangle ();
 
-	/*cout << "VENDOR: " << glGetString(GL_VENDOR) << endl;
+	cout << "VENDOR: " << glGetString(GL_VENDOR) << endl;
 	cout << "RENDERER: " << glGetString(GL_RENDERER) << endl;
 	cout << "VERSION: " << glGetString(GL_VERSION) << endl;
-	cout << "GLSL: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;*/
-}
+	cout << "GLSL: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+}*/
 int main (int argc, char** argv)
 {
 	int width = 600;
 	int height = 600;
 	initGLUT (argc, argv, width, height);
 	initGL(width, height);
-	glutMainLoop ();
+	//glutMainLoop ();
 	return 0;
 }
