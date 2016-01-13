@@ -134,6 +134,8 @@ float T=0;
 VAO *rectangle;
 float camera_rotation_angle = 90;
 float rectangle_rotation = 0;
+VAO* partCircle[20];
+float vertCircle[100];
 
 /* Executed when a regular key is pressed */
 void keyboardDown(unsigned char key, int x, int y)
@@ -354,6 +356,14 @@ void draw ()
   // draw3DObject draws the VAO given to it using current MVP matrix
   draw3DObject(rectangle);
 
+  for(int i=0;i<12;i++)
+  {
+	  Matrices.model=glm::translate(glm::vec3(0.0f+30.0*i,0.0f+30.0*i, 0.0f));
+	  MVP = VP * Matrices.model;
+	  glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&MVP[0][0]);
+	  draw3DObject(partCircle[i]);
+  }
+
   // Swap the frame buffers
   glutSwapBuffers ();
 
@@ -362,20 +372,18 @@ void draw ()
 
   //camera_rotation_angle++; // Simulating camera rotation
   // This basically does rotation if needed in the direction required
-  rectangle_rotation = rectangle_rotation + increments*rectangle_rot_dir*rectangle_rot_status;
+  //rectangle_rotation = rectangle_rotation + increments*rectangle_rot_dir*rectangle_rot_status;
 }
 
 /* Executed when the program is idle (no I/O activity) */
-void idle () {
+void idle()
+{
     // OpenGL should never stop drawing
     // can draw the same scene or a modified scene
     draw (); // drawing same scene
 }
-
-
 /* Initialise glut window, I/O callbacks and the renderer to use */
 /* Nothing to Edit here */
-
 void initGLUT(int& argc, char** argv, int width, int height)
 {
     glutInit(&argc, argv);
@@ -408,27 +416,61 @@ void initGLUT(int& argc, char** argv, int width, int height)
     
     //glutIgnoreKeyRepeat (true); // Ignore keys held down*/
 }
-
+float formatAngle(float A)
+{
+	if(A<0.0f)
+		return A+360.0f;
+	if(A>=360.0f)
+		return A-360.0f;
+	return A;
+}
+float D2R(float A)
+{
+	return (A*PI)/180.0f;
+}
+VAO* createTriangle(float X1,float Y1,float X2,float Y2,float X3,float Y3)
+{
+	cout << X1 << " " << X2 << " " <<  X3 << " " << Y1 << " " << Y2 << " " << Y3 << "\n";
+	static const GLfloat vertex_buffer_data[]={X1,Y1,0.0f,X2,Y2,0.0f,X3,Y3,0.0f};
+	static const GLfloat color_buffer_data[]={1,0,0,1,0,0,1,0,0};
+	return create3DObject(GL_TRIANGLES,3,vertex_buffer_data,color_buffer_data,GL_FILL);
+}
+void createCircle(float X,float Y,float R,int parts)
+{
+	int i=0;
+	float diff=360.0f/parts;
+	float A1=-diff/2;
+	float A2=diff/2;
+	for(;i<parts;i++)
+	{
+		A1=formatAngle(A1);
+		A2=formatAngle(A2);
+		vertCircle[6*i]=X;
+		vertCircle[6*i+1]=Y;
+		vertCircle[6*i+2]=X+R*cos(D2R(A1));
+		vertCircle[6*i+3]=Y+R*sin(D2R(A1));
+		vertCircle[6*i+4]=X+R*cos(D2R(A2));
+		vertCircle[6*i+5]=Y+R*sin(D2R(A2));
+		partCircle[i]=createTriangle(X,Y,X+R*cos(D2R(A1)),Y+R*sin(D2R(A1)),X+R*cos(D2R(A2)),Y+R*sin(D2R(A2)));
+		A1+=diff;
+		A2+=diff;
+	}
+	i=0;
+	for(;i<parts;i++)
+		for(int j=0;j<3;j++)
+			cout << vertCircle[6*i+2*j] << " " << vertCircle[6*i+2*j+1] << "\n";
+}
 void initGL(int width, int height)
 {
-	// Create the models
-
-	// Create and compile our GLSL program from the shaders
-	rectangle = createRectangle (10.0,10.0);
-	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
-	// Get a handle for our "MVP" uniform
+	rectangle=createRectangle(10.0,10.0);
+	createCircle(0.0f,0.0f,30.0f,12);
+	programID=LoadShaders("Sample_GL.vert","Sample_GL.frag");
 	Matrices.MatrixID = glGetUniformLocation(programID, "MVP");
-
 	reshapeWindow (width, height);
-
-	// Background color of the scene
-	glClearColor (0.3f, 0.3f, 0.3f, 0.0f); // R, G, B, A
+	glClearColor (0.3f, 0.3f, 0.3f, 0.0f);
 	glClearDepth (1.0f);
-
 	glEnable (GL_DEPTH_TEST);
 	glDepthFunc (GL_LEQUAL);
-
-
 	/*cout << "VENDOR: " << glGetString(GL_VENDOR) << endl;
 	cout << "RENDERER: " << glGetString(GL_RENDERER) << endl;
 	cout << "VERSION: " << glGetString(GL_VERSION) << endl;
