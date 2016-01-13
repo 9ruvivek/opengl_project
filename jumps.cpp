@@ -356,12 +356,13 @@ void draw ()
   // draw3DObject draws the VAO given to it using current MVP matrix
   draw3DObject(rectangle);
 
-  for(int i=0;i<12;i++)
+  for(int i=0;i<18;i++)
   {
-	  Matrices.model=glm::translate(glm::vec3(0.0f+30.0*i,0.0f+30.0*i, 0.0f));
+	  Matrices.model = glm::mat4(1.0f);
+	  Matrices.model=glm::translate(glm::vec3(-300.0f,-300.0f, 0.0f))*glm::rotate((float)(i*20.0f*M_PI/180.0f), glm::vec3(0,0,1));
 	  MVP = VP * Matrices.model;
 	  glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&MVP[0][0]);
-	  draw3DObject(partCircle[i]);
+	  draw3DObject(partCircle[0]);
   }
 
   // Swap the frame buffers
