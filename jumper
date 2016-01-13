@@ -1,0 +1,7 @@
+all: jumptest
+
+jumptest: testing.cpp
+	g++ -o jumptest jumps.cpp -lGL -lGLU -lGLEW -lglut 
+clean:
+	rm jumptest
+
